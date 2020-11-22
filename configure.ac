@@ -1,0 +1,19 @@
+AC_INIT([dgw521_utils], [0.1])
+AC_CONFIG_SRCDIR([src/dgw521-sniffer.c])
+AM_INIT_AUTOMAKE([foreign])
+AC_CONFIG_HEADERS([config.h])
+PKG_PROG_PKG_CONFIG
+AC_PROG_CC
+AC_PROG_CC_C99
+AC_SYS_LARGEFILE
+AM_PATH_GLIB_2_0(2.36.0,,, [])
+
+
+PKG_CHECK_EXISTS([libmodbus])
+LIBMODBUS_CFLAGS=$(pkg-config libmodbus --cflags)
+AC_SUBST(LIBMODBUS_CFLAGS)
+LIBMODBUS_LIBS=$(pkg-config libmodbus --libs)
+AC_SUBST(LIBMODBUS_LIBS)
+
+AC_CONFIG_FILES([Makefile src/Makefile])
+AC_OUTPUT
