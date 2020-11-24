@@ -36,6 +36,7 @@ struct AppContext
   gchar *device;
   guint speed;
   guint mb_addr;
+  gboolean debug;
 
   
   modbus_t *mb;
@@ -52,6 +53,7 @@ app_init(AppContext *app)
   app->device = "/dev/ttyACM0";
   app->speed = 38400;
   app->mb_addr = 1;
+  app->debug = 0;
   app->cmds = NULL;
   app->replies = NULL;
   app->n_cmds = 0;
@@ -95,8 +97,9 @@ init_modbus(AppContext *app)
     g_printerr("Failed to create Modbus context\n");
     return FALSE;
   }
-  modbus_set_debug(app->mb, 0);
+  modbus_set_debug(app->mb, app->debug);
   modbus_set_slave(app->mb,app->mb_addr);
+  modbus_set_response_timeout(app->mb, 1, 0);
   if (modbus_connect(app->mb)) {
     g_printerr("Failed to connect\n");
     return FALSE;
@@ -115,6 +118,8 @@ const GOptionEntry app_options[] = {
    &app.speed, "Serial speed (bps)", "SPEED"},
   {"mb-addr", 0, 0, G_OPTION_ARG_INT,
    &app.mb_addr, "Modbus address of DGW-521", "ADDR"},
+  {"debug", 0, 0, G_OPTION_ARG_NONE, &app.debug,
+   "Turn on Modbus debugging", NULL},
   {NULL}
 };
 
@@ -136,6 +141,7 @@ send_cmd(modbus_t *mb, uint16_t *cmds, uint16_t *replies,
 		  "Failed to write to command queue");
       return FALSE;
     }
+    modbus_flush(mb);
     while(TRUE) {
       uint16_t ready;
       int s = modbus_read_registers(mb, MB_ADDR_CMD_READY, 1, &ready);
@@ -144,6 +150,7 @@ send_cmd(modbus_t *mb, uint16_t *cmds, uint16_t *replies,
 		    "Failed to read command done status");
 	return FALSE;
       }
+      modbus_flush(mb);
       if (ready == 0xff) break;
     }
     int r = modbus_read_registers(mb, MB_ADDR_REPLY_QUEUE, block_len, replies);
@@ -152,6 +159,7 @@ send_cmd(modbus_t *mb, uint16_t *cmds, uint16_t *replies,
 		  "Failed to read replies");
       return FALSE;
     }
+    modbus_flush(mb);
     len -= block_len;
     cmds += block_len;
     replies += block_len;

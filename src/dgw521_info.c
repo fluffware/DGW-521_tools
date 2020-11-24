@@ -36,6 +36,7 @@ struct AppContext
   gchar *device;
   guint speed;
   guint mb_addr;
+  gboolean debug;
 
   gint set_addr;
   gchar *set_serial;
@@ -57,6 +58,7 @@ app_init(AppContext *app)
   app->device = "/dev/ttyACM0";
   app->speed = 38400;
   app->mb_addr = 1;
+  app->debug = 0;
   app->set_addr = -1;
   app->set_serial = NULL;
   app->mb = NULL;
@@ -186,7 +188,7 @@ init_modbus(AppContext *app)
     g_printerr("Failed to create Modbus context\n");
     return FALSE;
   }
-  modbus_set_debug(app->mb, 0);
+  modbus_set_debug(app->mb, app->debug);
   modbus_set_slave(app->mb,app->mb_addr);
   if (modbus_connect(app->mb)) {
     g_printerr("Failed to connect\n");
@@ -216,6 +218,8 @@ const GOptionEntry app_options[] = {
    &app.watchdog_disable,  "Enable watchdog", NULL},
   {"set-watchdog-timeout", 0, 0, G_OPTION_ARG_DOUBLE,
    &app.watchdog_timeout,  "Watchdog timeout in seconds", NULL},
+  {"debug", 0, 0, G_OPTION_ARG_NONE, &app.debug,
+   "Turn on Modbus debugging", NULL},
   {NULL}
 };
 

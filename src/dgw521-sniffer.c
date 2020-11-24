@@ -18,6 +18,7 @@ struct AppContext
   gchar *device;
   guint speed;
   guint mb_addr;
+  gboolean debug;
   gboolean decode;
   
   modbus_t *mb;
@@ -34,6 +35,7 @@ app_init(AppContext *app)
   app->device = "/dev/ttyACM0";
   app->speed = 38400;
   app->mb_addr = 1;
+  app->debug = 0;
   app->decode = FALSE;
   app->mb = NULL;
   app->mb_thread_running = FALSE;
@@ -78,6 +80,7 @@ modbus_poll(gpointer data)
   } else {
     g_printerr("Failed to read first sequece number");
   }
+  modbus_flush(app->mb);
   while(app->mb_thread_running) {
     uint16_t seq;
     g_usleep(G_USEC_PER_SEC/10);
@@ -128,6 +131,7 @@ modbus_poll(gpointer data)
     } else {
       g_printerr("Failed to read sequece number");
     }
+    modbus_flush(app->mb);
   }
   g_debug("Thread exiting");
   return NULL;
@@ -151,7 +155,7 @@ init_modbus(AppContext *app)
     g_printerr("Failed to create Modbus context\n");
     return FALSE;
   }
-  modbus_set_debug(app->mb, 0);
+  modbus_set_debug(app->mb, app->debug);
   modbus_set_slave(app->mb,1);
   if (modbus_connect(app->mb)) {
     g_printerr("Failed to connect\n");
@@ -187,6 +191,8 @@ const GOptionEntry app_options[] = {
    &app.mb_addr, "Modbus address of DGW-521", "ADDR"},
   {"decode", 0, 0, G_OPTION_ARG_NONE,
    &app.decode, "Decode packets", NULL},
+  {"debug", 0, 0, G_OPTION_ARG_NONE, &app.debug,
+   "Turn on Modbus debugging", NULL},
   {NULL}
 };
 
