@@ -138,7 +138,8 @@ send_cmd(modbus_t *mb, uint16_t *cmds, uint16_t *replies,
     int w = modbus_write_registers(mb, MB_ADDR_CMD_QUEUE, block_len, cmds);
     if (w <= 0) {
       g_set_error(err, DGW_ERROR, DGW_ERROR_WRITE, 
-		  "Failed to write to command queue");
+		  "Failed to write to command queue: %s",
+		  modbus_strerror(errno));
       return FALSE;
     }
     modbus_flush(mb);
@@ -147,7 +148,8 @@ send_cmd(modbus_t *mb, uint16_t *cmds, uint16_t *replies,
       int s = modbus_read_registers(mb, MB_ADDR_CMD_READY, 1, &ready);
       if (s != 1) {
 	g_set_error(err, DGW_ERROR, DGW_ERROR_WRITE, 
-		    "Failed to read command done status");
+		    "Failed to read command done status: %s", 
+		    modbus_strerror(errno));
 	return FALSE;
       }
       modbus_flush(mb);
@@ -156,7 +158,7 @@ send_cmd(modbus_t *mb, uint16_t *cmds, uint16_t *replies,
     int r = modbus_read_registers(mb, MB_ADDR_REPLY_QUEUE, block_len, replies);
     if (r <= 0) {
       g_set_error(err, DGW_ERROR, DGW_ERROR_WRITE, 
-		  "Failed to read replies");
+		  "Failed to read replies: %s", modbus_strerror(errno));
       return FALSE;
     }
     modbus_flush(mb);

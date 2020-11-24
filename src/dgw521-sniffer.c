@@ -78,7 +78,8 @@ modbus_poll(gpointer data)
   if (r == 1) {
     g_debug("Start: %d", last_seq);
   } else {
-    g_printerr("Failed to read first sequece number");
+    g_printerr("Failed to read first sequece number: %s", 
+	       modbus_strerror(errno));
   }
   modbus_flush(app->mb);
   while(app->mb_thread_running) {
@@ -122,14 +123,14 @@ modbus_poll(gpointer data)
 	  }
 	  fputc('\n', stdout);
 	} else {
-	  g_printerr("Failed to read records");
+	  g_printerr("Failed to read records: %s\n", modbus_strerror(errno));
 	}
 	
 	  
 	last_seq = seq;
       }
     } else {
-      g_printerr("Failed to read sequece number");
+      g_printerr("Failed to read sequece number\n");
     }
     modbus_flush(app->mb);
   }
@@ -158,7 +159,7 @@ init_modbus(AppContext *app)
   modbus_set_debug(app->mb, app->debug);
   modbus_set_slave(app->mb,1);
   if (modbus_connect(app->mb)) {
-    g_printerr("Failed to connect\n");
+    g_printerr("Failed to connect: %s\n",modbus_strerror(errno));
     return FALSE;
   }
   
