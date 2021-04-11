@@ -62,6 +62,25 @@ app_cleanup(AppContext* app)
 /* Don't read the full buffer since the oldest records risk being overwritten.*/
 #define MAX_RECORDS 24
 
+static void
+print_record(const uint16_t *rec)
+{
+  uint16_t ts = rec[1] >> 6;
+  if (ts == 1000) {
+    printf(">= 1s  ");
+  } else {
+    printf("%4dms ", ts);
+  }
+  if (rec[1] & 0x08) {
+    printf("%04x", rec[0]);
+  } else {
+    printf("%02x", rec[0]);
+  }
+  if (rec[1] & 0x02) printf(" Incorrect data");
+  if (rec[1] & 0x04) printf(" Incorrect start bit");
+  printf("\n");
+}
+
 static gpointer 
 modbus_poll(gpointer data)
 {
@@ -119,9 +138,9 @@ modbus_poll(gpointer data)
 	  unsigned int i;
 	  g_debug("Got %d records", len);
 	  for (i = 0; i < len; i++) {
-	    printf(" %04x %04x",records[i*2], records[i*2+1]);
+	    print_record(&records[i*2]);
+	    //printf(" %04x %04x",records[i*2], records[i*2+1]);
 	  }
-	  fputc('\n', stdout);
 	} else {
 	  g_printerr("Failed to read records: %s\n", modbus_strerror(errno));
 	}
